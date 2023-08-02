@@ -48,12 +48,10 @@ print(sum(ps))
 m = GEKKO()
 
 x = m.Array(m.Var, 100, integer = True, lb = 0, ub = 1)
-y = m.Array(m.Var, 100, integer = True, lb = 0, ub = 1)
+y = m.Array(m.Var, 100000, integer = True, lb = 0, ub = 1)
 
-m.qobj(ps, x = x, otype = 'min')
-m.axb([sh[:100]], [2520320], x = y, etype = '>=')
-m.axb([sh[:100]], [5.5], x = y, etype = '<=')
-math.sqrt(())
-m.options.SOLVER = 1
+m.Minimize(m.sum([ps[i] * x[i] for i in range(100)]))
+m.Equations([sum(sh[i] * y[i] for i in range(100)) >= 500],
+            )
 m.solve()
 print('Objective: ', -m.options.OBJFCNVAL)
