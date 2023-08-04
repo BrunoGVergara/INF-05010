@@ -45,34 +45,22 @@ sx = [s.x for s in students[k - 1]]
 sy = [s.y for s in students[k - 1]]
 sh = [s.h for s in students[k - 1]]
 
-
-
-m = GEKKO(remote = False)
-c = [[s] for s in ps]
-
-print(c)
-
-'''
-
-A = [[1,1,2,2,3,3],[1,2,1,2,1,2],[-1,1,3,2,2,3]]
-b = [[1], [D]]
-z = m.Array(m.Var,2,integer=True,lb=0)
-m.qobj(c,x=z,otype='max',sparse=True)
-m.axb(A,b,x=z,etype='<=',sparse=True)
-m.options.SOLVER = 1
-m.solve()
-print('Objective: ', -m.options.OBJFCNVAL)
-print('x: ', z[0].value[0])
-print('y: ', z[1].value[0])
+ns = 10000
+sh = sh[:10000]
+H = 200
 
 m = GEKKO(remote = False)
+
+c = [list(range(1, np + 1))] + [[s for s in ps]]
+b = [[1, 2], [H, 0]]
 
 Xi = m.Array(m.Var, np, integer = True, lb = 0, ub = 1)
 Yi = m.Array(m.Var, ns, integer = True, lb = 0, ub = 1) 
 sp = [[] for j in range(ns)]
+A = [[1] * ns + [2] * ns, list(range(1, ns + 1)) + list(range(1, ns + 1)), sh + [0] * ns]
 
-m.Minimize(sum(ps[i] * Xi[i] for i in range(np)))
-m.Equation(sum(sh[j] * Yi[j] for j in range(ns)) >= H)
+m.qobj(c, x = Xi, otype = 'min', sparse = True)
+m.axb(A, b, x = Yi, etype = '>=', sparse = True)
 
 for i in range(np):
 
@@ -88,8 +76,10 @@ for j in range(ns):
 
   m.Equation(Yi[j] <= sum(sp[j]))
 
+m.solver_options = ['minlp_gap_tol 1.0e-4',\
+                    'minlp_maximum_iterations 50000',\
+                    'minlp_max_iter_with_int_sol 40000']
+
 m.options.SOLVER = 1
 m.solve()
 print('Objective: ', m.options.OBJFCNVAL)
-
-'''
