@@ -81,5 +81,5 @@ m.solver_options = ['minlp_gap_tol 1.0e-4',\
                     'minlp_max_iter_with_int_sol 40000']
 
 m.options.SOLVER = 1
-m.solve()
+m.solve(disp = False)
 print('Objective: ', m.options.OBJFCNVAL)
