@@ -4,97 +4,106 @@
 # Bruno Grohs Vergara 00324256
 # Erick Larratéa Knoblich 00324422
 
-from gekko import GEKKO
-import math, time, os
+import random, math
 
 # ----------------------------------------------------------------------------------------------------
 
 class Professor:
 
-  def __init__(self, x, y, s):
+  def __init__(self, x, y, s, i):
 
     self.x = x
     self.y = y
     self.s = s
+    self.i = i
 
 class Student:
 
-  def __init__(self, x, y, h):
+  def __init__(self, x, y, h, j):
 
     self.x = x
     self.y = y
     self.h = h
-
-professors, students = [[] for k in range(10)], [[] for k in range(10)]
-solutions, X, Y = [], [], []
+    self.j = j
 
 # ----------------------------------------------------------------------------------------------------
 
-for k in range(1, 10 + 1):
+def ReadFile(FN):
 
-  content = open("file{}.csv".format(k), "r").readlines()
-  P, S = content[0].split(",")
-  P, S = int(P), int(S.strip())
+  content = open("file{}.csv".format(FN), "r").readlines()
+  PN, SN = content[0].split(",")
+  PN, SN = int(PN), int(SN.strip())
   H, D = content[1].split(",")
   H, D = int(H), float(D.strip())
+  P, S = [], []
 
-  for i in range(2, 2 + P):
+  for i in range(2, 2 + PN):
 
     id, x, y, s = content[i].split(",")
     x, y, s = float(x), float(y), int(s.strip())
-    professors[k - 1].append(Professor(x, y, s))
+    P.append(Professor(x, y, s, 1))
+
+  for j in range(2 + PN, 2 + PN + SN):
     
-  for j in range(2 + P, 2 + P + S):
-     
-    id, x, y, h = content[j].split(",")
-    x, y, h = float(x), float(y), int(h.strip())
-    students[k - 1].append(Student(x, y, h))
+      id, x, y, h = content[j].split(",")
+      x, y, h = float(x), float(y), int(h.strip())
+      S.append(Student(x, y, h, 0))
 
-  px = [p.x for p in professors[k - 1]]
-  py = [p.y for p in professors[k - 1]]
-  ps = [p.s for p in professors[k - 1]]
+  return P, PN, S, SN, D, H
 
-  sx = [s.x for s in students[k - 1]]
-  sy = [s.y for s in students[k - 1]]
-  sh = [s.h for s in students[k - 1]]
+def ValidateSolution(P, S, D, H):
 
-  m = GEKKO(remote = False)
-  Xi = m.Array(m.Var, P, integer = True, lb = 0, ub = 1)
-  Yj = m.Array(m.Var, S, integer = True, lb = 0, ub = 1) 
-  Pj = [[] for j in range(S)]
-  m.qobj(ps, x = Xi, otype = 'min')
-  m.axb([sh], [H], x = Yj, etype = '>=')
+  for i in range(len(P)):
 
-  for i in range(P):
+    if P[i].i == 0:
 
-    for j in range(S):
+      continue
 
-      if math.sqrt((px[i] - sx[j])**2 + (py[i] - sy[j])**2) <= D:
+    for j in range(len(S)):
 
-        Pj[j].append(Xi[i])
+      if math.sqrt((P[i].x - S[j].x)**2 + (P[i].y - S[j].y)**2) <= D:
 
-  for j in range(S):
+        S[j].j = 1
 
-    m.Equation(Yj[j] <= sum(Pj[j]))
+  return True if sum(j.h * j.j for j in S) >= H else False
 
-  m.options.SOLVER = 1
-  m.solver_options = ['minlp_gap_tol 1.0e-4',\
-                    'minlp_maximum_iterations 50000',\
-                    'minlp_max_iter_with_int_sol 40000']
-  start = time.time()
-  m.solve(disp = False)
-  end = time.time()
-  t = end - start
-  solutions.append(("Objective: {}".format(m.options.OBJFCNVAL), "Time: {}".format((t))))
-  X.append([i.value[0] for i in Xi])
-  Y.append([j.value[0] for j in Yj])
+def SumSalaries(P):
 
-os.system('cls||clear')
-i = 1
+  sum = 0
 
-for s in solutions:
+  for i in range(len(P)):
 
-  print("Instance #{}:\n\n{}\n{}\n".format(i, s[0], s[1]))
-  i += 1
+    sum += P[i].s * P[i].i
+
+  return sum
+
+def BetterSolution(P, S):
+
+  objectiveA = SumSalaries(P)
+  print("Iteration #0: {}".format(objectiveA))
+
+  for k in range(100):
+
+    for p in P:
+
+      p.i = random.randint(0, 1)
+
+    if ValidateSolution(P, S, D, H):
+
+      objectiveB = SumSalaries(P)
+
+      if (objectiveB < objectiveA):
+
+        objectiveA = objectiveB
+        print("Iteration #{}: {} - SUCESS".format(k + 1, objectiveA))
+
+      else:
+
+        print("Iteration #{}: {} - FAILURE".format(k + 1, objectiveB))
+
+  return objectiveA
 
 # ----------------------------------------------------------------------------------------------------
+
+P, PN, S, SN, D, H = ReadFile(1)
+solution = BetterSolution(P, S)
