@@ -53,29 +53,23 @@ def ReadFile(FN):
 
 def ValidateSolution(P, S, D, H):
 
-  for i in range(len(P)):
+  for p in P:
 
-    if P[i].i == 0:
+    if p.i == 0:
 
       continue
 
-    for j in range(len(S)):
+    for s in S:
 
-      if math.sqrt((P[i].x - S[j].x)**2 + (P[i].y - S[j].y)**2) <= D:
+      if math.sqrt((p.x - s.x)**2 + (p.y - s.y)**2) <= D:
 
-        S[j].j = 1
+        s.j = 1
 
   return True if sum(j.h * j.j for j in S) >= H else False
 
 def SumSalaries(P):
 
-  sum = 0
-
-  for i in range(len(P)):
-
-    sum += P[i].s * P[i].i
-
-  return sum
+  return sum(p.s * p.i for p in P)
 
 def BetterSolution(P, S):
 
@@ -88,6 +82,10 @@ def BetterSolution(P, S):
 
       p.i = random.randint(0, 1)
 
+    for s in S:
+
+      s.j = 0
+      
     if ValidateSolution(P, S, D, H):
 
       objectiveB = SumSalaries(P)
