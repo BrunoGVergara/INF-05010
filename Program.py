@@ -93,7 +93,7 @@ def BetterSolution(P, S):
       if (objectiveB < objectiveA):
 
         objectiveA = objectiveB
-        print("Iteration #{}: {} - SUCESS".format(k + 1, objectiveA))
+        print("Iteration #{}: {} - SUCCESS".format(k + 1, objectiveA))
 
       else:
 
@@ -101,7 +101,82 @@ def BetterSolution(P, S):
 
   return objectiveA
 
+def CalculaObjetivo(Xi, professores):
+
+  objt = 0
+  for i in range(len(Xi)):
+    objt+= professores.s * Xi[i]
+
+  return objt
+
+
+def VerificarSolucao(professores, alunos, distancia, horas, Xi):
+  #Verifica se um cromossomo Xi é uma solução válida
+  i = 0
+  for x in Xi:
+    if x == 0:  #Se um professor não for usado na solução, não existe necessidade de verificar os alunos que ele atende
+      continue
+
+    for a in alunos:
+      if math.sqrt((professores[i].x - a.x)**2 + (professores[i].y - a.y)**2) <= distancia:
+        #Descobre todos os alunos que o professor atende baseado na distância e no limite preestabelecido
+        a.j = 1
+    i += 1
+  
+  return True if sum(j.h * j.j for j in alunos) >= horas else False
+
+
+def gerarPopulacaoInicial(professores, alunos, distancia, horas, n, numProf):  
+#Gera uma populacao inicial randomica de tamanho n somente com solucoes viaveis
+
+  populacao = []
+  cromossomo = []
+
+  for i in range(n):  #loop que gera os n cromossomos
+
+    for j in range(numProf):  #loop que gera os genes do cromossomo
+      cromossomo.append(random.randint(0,1))
+    
+    if VerificarSolucao(professores,alunos,distancia,horas,cromossomo): #Testa se a solucao gerada eh valida
+      populacao.append(cromossomo)
+
+    cromossomo = []
+  
+  return populacao
+
+
+def SelecaoPorTorneio(professores, populacao):
+#Realiza a selecao de dois individuos atraves de um torneio de tamanho k
+
+  k = random.randint(2,round(0.25*len(populacao))) #Gera um numero aleatorio para o tamanho do torneio
+  torneio = []
+  cromossomo1 = []
+  cromossomo2 = []
+
+  for i in range(k):  #Seleciona k cromossomos da populacao aleatoriamente
+    torneio.append(populacao[random.randint(0,len(populacao))])
+
+  cromossomo1 = torneio[0]  #Pega os dois primeiros cromossomos
+  cromossomo2 = torneio[1]
+
+  if CalculaObjetivo(cromossomo2, professores) < CalculaObjetivo(cromossomo1,professores):
+    #Caso o segundo cromossomo tenha valor menor que o primeiro
+    aux = cromossomo1
+    cromossomo1 = cromossomo2
+    cromossomo2 = aux
+
+  for i in range(2,len(torneio)): #Seleciona os dois cromossomos com menos valor da funcao objetivo
+    if CalculaObjetivo(torneio[i],professores) < CalculaObjetivo(cromossomo1,professores):
+      cromossomo1 = torneio[i]
+    elif CalculaObjetivo(torneio[i],professores) < CalculaObjetivo(cromossomo2,professores):
+      cromossomo2 = torneio[i]
+  
+  return cromossomo1,cromossomo2
+
+
 # ----------------------------------------------------------------------------------------------------
 
 P, PN, S, SN, D, H = ReadFile(1)
-solution = BetterSolution(P, S)
+
+#populacaoInic = gerarPopulacaoInicial(P,S,D,H,30,PN)
+#SelecaoPorTorneio(P,populacaoInic)
